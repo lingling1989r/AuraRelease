@@ -1,10 +1,10 @@
 # AuraManager installer for Windows — one command to get started.
 #
 # Install CLI (default): connects to AuraManager cloud
-#   irm https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.ps1 | iex
 #
 # Self-host: starts a local AuraManager server + installs CLI + configures
-#   $env:AURA_MODE="local"; irm https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.ps1 | iex
+#   $env:AURA_MODE="local"; irm https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.ps1 | iex
 #
 
 $ErrorActionPreference = "Stop"
@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 # Configuration
 # ---------------------------------------------------------------------------
 $RepoUrl = "https://github.com/lingling1989r/AuraManager.git"  # source repo (private); self-host mode needs access
-$RepoWebUrl = "https://github.com/lingling1989r/aura-releases"
+$RepoWebUrl = "https://github.com/lingling1989r/AuraRelease"
 $DefaultInstallDir = Join-Path $env:USERPROFILE ".aura\server"
 $InstallDir    = if ($env:AURA_INSTALL_DIR) { $env:AURA_INSTALL_DIR } else { $DefaultInstallDir }
 
@@ -85,7 +85,7 @@ function Get-SelfHostFrontendPort {
 
 function Get-LatestVersion {
     try {
-        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/lingling1989r/aura-releases/releases/latest" -ErrorAction Stop
+        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/lingling1989r/AuraRelease/releases/latest" -ErrorAction Stop
         return $release.tag_name
     } catch {
         return $null
@@ -246,7 +246,7 @@ function Install-CliBinary {
     }
 
     $version = $latest.TrimStart('v')
-    $url = "https://github.com/lingling1989r/aura-releases/releases/download/$latest/aura-cli-$version-windows-$arch.zip"
+    $url = "https://github.com/lingling1989r/AuraRelease/releases/download/$latest/aura-cli-$version-windows-$arch.zip"
     $tmpDir = Join-Path ([System.IO.Path]::GetTempPath()) "aura-install"
 
     if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
@@ -261,7 +261,7 @@ function Install-CliBinary {
     }
 
     # Verify SHA256 checksum
-    $checksumUrl = "https://github.com/lingling1989r/aura-releases/releases/download/$latest/checksums.txt"
+    $checksumUrl = "https://github.com/lingling1989r/AuraRelease/releases/download/$latest/checksums.txt"
     try {
         $checksums = Invoke-WebRequest -Uri $checksumUrl -UseBasicParsing -ErrorAction Stop
         $checksumContent = if ($checksums.Content -is [byte[]]) {
@@ -488,7 +488,7 @@ function Start-DefaultInstall {
     Write-Host "     aura setup self-host      " -NoNewline; Write-Host "# Connect to a self-hosted server" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  Self-hosting? Install the server first:"
-    Write-Host '     $env:AURA_MODE="with-server"; irm https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.ps1 | iex'
+    Write-Host '     $env:AURA_MODE="with-server"; irm https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.ps1 | iex'
     Write-Host ""
 }
 
@@ -524,7 +524,7 @@ function Start-LocalInstall {
     Write-Host "  or read the generated code from backend logs when Resend is unset."
     Write-Host ""
     Write-Host "  To stop all services:"
-    Write-Host '     $env:AURA_MODE="stop"; irm https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.ps1 | iex'
+    Write-Host '     $env:AURA_MODE="stop"; irm https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.ps1 | iex'
     Write-Host ""
 }
 

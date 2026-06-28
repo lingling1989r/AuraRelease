@@ -2,10 +2,10 @@
 # AuraManager installer — installs the CLI and optionally provisions a self-host server.
 #
 # Install / upgrade CLI only:
-#   curl -fsSL https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.sh | bash
 #
 # Install CLI + provision self-host server:
-#   curl -fsSL https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.sh | bash -s -- --with-server
+#   curl -fsSL https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.sh | bash -s -- --with-server
 #
 # After installation, run `aura setup` to configure your environment.
 #
@@ -15,7 +15,7 @@ set -euo pipefail
 # Configuration
 # ---------------------------------------------------------------------------
 REPO_URL="https://github.com/lingling1989r/AuraManager.git"  # source repo (private); self-host mode needs access
-REPO_WEB_URL="https://github.com/lingling1989r/aura-releases"  # without .git, for GitHub web APIs
+REPO_WEB_URL="https://github.com/lingling1989r/AuraRelease"  # without .git, for GitHub web APIs
 INSTALL_DIR="${AURA_INSTALL_DIR:-$HOME/.aura/server}"
 BREW_PACKAGE="lingling1989r/tap/aura"  # placeholder; no brew tap is published yet — install falls through to binary
 
@@ -87,7 +87,7 @@ detect_os() {
     Linux)  OS="linux" ;;
     MINGW*|MSYS*|CYGWIN*)
             fail "This script does not support Windows. Use the PowerShell installer instead:
-  irm https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.ps1 | iex" ;;
+  irm https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.ps1 | iex" ;;
     *)      fail "Unsupported operating system: $(uname -s). AuraManager supports macOS, Linux, and Windows." ;;
   esac
 
@@ -149,7 +149,7 @@ install_cli_binary() {
   fi
 
   local version="${latest#v}"
-  local url="https://github.com/lingling1989r/aura-releases/releases/download/${latest}/aura-cli-${version}-${OS}-${ARCH}.tar.gz"
+  local url="https://github.com/lingling1989r/AuraRelease/releases/download/${latest}/aura-cli-${version}-${OS}-${ARCH}.tar.gz"
   local tmp_dir
   tmp_dir=$(mktemp -d)
 
@@ -427,7 +427,7 @@ run_default() {
   printf "     ${CYAN}aura setup self-host${RESET}       # Connect to a self-hosted server\n"
   printf "\n"
   printf "  ${BOLD}Self-hosting?${RESET} Install the server first:\n"
-  printf "     curl -fsSL https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.sh | bash -s -- --with-server\n"
+  printf "     curl -fsSL https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.sh | bash -s -- --with-server\n"
   printf "\n"
 }
 
@@ -465,7 +465,7 @@ run_with_server() {
   printf "  or read the generated code from backend logs when Resend is unset.\n"
   printf "\n"
   printf "  ${BOLD}To stop all services:${RESET}\n"
-  printf "     curl -fsSL https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.sh | bash -s -- --stop\n"
+  printf "     curl -fsSL https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.sh | bash -s -- --stop\n"
   printf "\n"
 }
 

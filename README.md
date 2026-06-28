@@ -6,17 +6,17 @@ Public distribution repository for the [AuraManager](https://www.aurababa.com) C
 
 **macOS / Linux:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/lingling1989r/aura-releases/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.ps1 | iex
 ```
 
 ## Releases
 
-CLI binaries are published as [GitHub Releases](https://github.com/lingling1989r/aura-releases/releases) on this repository.
+CLI binaries are published as [GitHub Releases](https://github.com/lingling1989r/AuraRelease/releases) on this repository.
 
 ## Self-Hosting
 
