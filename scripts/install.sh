@@ -141,11 +141,14 @@ install_cli_brew() {
 install_cli_binary() {
   info "Installing AuraManager CLI from GitHub Releases..."
 
-  # Get latest release tag
+  # Get latest release tag. GitHub redirects /releases/latest to
+  # /releases/tag/<tag> when at least one release exists; with no releases it
+  # redirects to /releases (no "tag/" segment), which we must treat as "no
+  # release published yet" rather than a malformed tag.
   local latest
-  latest=$(curl -sI "$REPO_WEB_URL/releases/latest" 2>/dev/null | grep -i '^location:' | sed 's/.*tag\///' | tr -d '\r\n' || true)
+  latest=$(get_latest_version)
   if [ -z "$latest" ]; then
-    fail "Could not determine latest release. Check your network connection."
+    fail "No AuraManager release has been published yet at $REPO_WEB_URL/releases. Please publish a release (with aura-cli-* assets) and re-run."
   fi
 
   local version="${latest#v}"
@@ -195,8 +198,16 @@ add_to_path() {
 }
 
 get_latest_version() {
+  # GitHub redirects /releases/latest -> /releases/tag/<tag> when a release
+  # exists; with no releases it redirects to /releases (no "tag/" segment).
+  # Only return the tag when the redirect target actually contains "tag/",
+  # otherwise emit nothing so callers can detect "no release yet".
   # grep exits 1 when no match; use `|| true` to avoid triggering pipefail
-  curl -sI "$REPO_WEB_URL/releases/latest" 2>/dev/null | grep -i '^location:' | sed 's/.*tag\///' | tr -d '\r\n' || true
+  curl -sI "$REPO_WEB_URL/releases/latest" 2>/dev/null |
+    grep -i '^location:' |
+    grep -i '/tag/' |
+    sed 's#.*/tag/##' |
+    tr -d '\r\n' || true
 }
 
 get_selfhost_ref() {
