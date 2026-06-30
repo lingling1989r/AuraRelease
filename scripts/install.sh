@@ -4,6 +4,11 @@
 # Install / upgrade CLI only:
 #   curl -fsSL https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.sh | bash
 #
+# If github.com / raw.githubusercontent.com is blocked on your network
+# (curl: (56) Recv failure: Operation timed out), route through a mirror:
+#   curl -fsSL https://gh-proxy.com/https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.sh \
+#     | AURA_GH_PROXY=https://gh-proxy.com/ bash
+#
 # Install CLI + provision self-host server:
 #   curl -fsSL https://raw.githubusercontent.com/lingling1989r/AuraRelease/main/scripts/install.sh | bash -s -- --with-server
 #
@@ -40,6 +45,16 @@ warn()  { printf "${BOLD}${YELLOW}⚠ %s${RESET}\n" "$*" >&2; }
 fail()  { printf "${BOLD}${RED}✗ %s${RESET}\n" "$*" >&2; exit 1; }
 
 command_exists() { command -v "$1" >/dev/null 2>&1; }
+
+# Prefix every GitHub URL with AURA_GH_PROXY when set, so the script + binary
+# download work on networks where raw.githubusercontent.com / github.com /
+# api.github.com are blocked or throttled. The proxy must prefix the full
+# GitHub URL verbatim, e.g.  AURA_GH_PROXY=https://gh-proxy.com/
+# Then https://github.com/a/b -> https://gh-proxy.com/https://github.com/a/b
+# Leave empty for direct GitHub access (the default).
+gh_url() {
+  printf '%s%s' "${AURA_GH_PROXY:-}" "$1"
+}
 
 env_file_value() {
   local file="$1"
@@ -141,25 +156,24 @@ install_cli_brew() {
 install_cli_binary() {
   info "Installing AuraManager CLI from GitHub Releases..."
 
-  # Get latest release tag. GitHub redirects /releases/latest to
-  # /releases/tag/<tag> when at least one release exists; with no releases it
-  # redirects to /releases (no "tag/" segment), which we must treat as "no
-  # release published yet" rather than a malformed tag.
+  # AURA_VERSION lets the caller pin a release (e.g. v0.3.25) and skip the
+  # latest-release lookup entirely — useful on restricted networks where the
+  # GitHub API / redirect headers are unreliable even through a proxy.
   local latest
-  latest=$(get_latest_version)
+  latest="${AURA_VERSION:-$(get_latest_version)}"
   if [ -z "$latest" ]; then
     fail "No AuraManager release has been published yet at $REPO_WEB_URL/releases. Please publish a release (with aura-cli-* assets) and re-run."
   fi
 
   local version="${latest#v}"
-  local url="https://github.com/lingling1989r/AuraRelease/releases/download/${latest}/aura-cli-${version}-${OS}-${ARCH}.tar.gz"
+  local url="$(gh_url "https://github.com/lingling1989r/AuraRelease/releases/download/${latest}/aura-cli-${version}-${OS}-${ARCH}.tar.gz")"
   local tmp_dir
   tmp_dir=$(mktemp -d)
 
   info "Downloading $url ..."
-  if ! curl -fsSL "$url" -o "$tmp_dir/aura.tar.gz"; then
+  if ! curl -fSL "$url" -o "$tmp_dir/aura.tar.gz"; then
     rm -rf "$tmp_dir"
-    fail "Failed to download CLI binary."
+    fail "Failed to download CLI binary. If github.com is blocked on your network, re-run with AURA_GH_PROXY=https://gh-proxy.com/ (and optionally AURA_VERSION=v0.3.25)."
   fi
 
   tar -xzf "$tmp_dir/aura.tar.gz" -C "$tmp_dir" aura
@@ -214,7 +228,7 @@ get_latest_version() {
   owner_repo="${owner_repo%.git}"
 
   # Strategy 1: REST API (preferred — doesn't depend on redirect headers).
-  tag=$(curl -fsSL "https://api.github.com/repos/${owner_repo}/releases/latest" 2>/dev/null |
+  tag=$(curl -fsSL "$(gh_url "https://api.github.com/repos/${owner_repo}/releases/latest")" 2>/dev/null |
     grep -o '"tag_name"[[:space:]]*:[[:space:]]*"[^"]*"' |
     head -n1 |
     sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"//; s/"$//' |
@@ -225,7 +239,7 @@ get_latest_version() {
   fi
 
   # Strategy 2: redirect Location header.
-  curl -sI "$REPO_WEB_URL/releases/latest" 2>/dev/null |
+  curl -sI "$(gh_url "$REPO_WEB_URL/releases/latest")" 2>/dev/null |
     grep -i '^location:' |
     grep -i '/tag/' |
     sed 's#.*/tag/##' |
@@ -559,6 +573,11 @@ main() {
         echo "                        (default: /usr/local/bin, then \$HOME/.local/bin)"
         echo "  AURA_SELFHOST_REF  Git ref to check out for self-host assets"
         echo "                        (default: latest release tag, falling back to main)"
+        echo "  AURA_GH_PROXY      Prefix for all GitHub URLs, to bypass networks"
+        echo "                        where github.com is blocked, e.g."
+        echo "                        https://gh-proxy.com/ (default: none)"
+        echo "  AURA_VERSION       Pin a specific release tag (e.g. v0.3.25) and"
+        echo "                        skip the latest-release lookup"
         echo ""
         echo "After installation, run 'aura setup' to configure your environment."
         exit 0
