@@ -301,9 +301,14 @@ install_cli() {
     return 0
   fi
 
-  if command_exists brew; then
+  if command_exists brew && brew list "$BREW_PACKAGE" >/dev/null 2>&1; then
+    # Already installed via Homebrew — stay on the brew track.
     install_cli_brew || install_cli_binary
   else
+    # No brew tap is published yet (lingling1989r/homebrew-tap doesn't
+    # exist), so `brew tap` always fails — but only after a slow `brew
+    # auto-update` + clone attempt that dumps 80 lines of scary warnings.
+    # Skip straight to the GitHub Releases binary install for fresh installs.
     install_cli_binary
   fi
 
