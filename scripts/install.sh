@@ -198,11 +198,33 @@ add_to_path() {
 }
 
 get_latest_version() {
-  # GitHub redirects /releases/latest -> /releases/tag/<tag> when a release
-  # exists; with no releases it redirects to /releases (no "tag/" segment).
-  # Only return the tag when the redirect target actually contains "tag/",
-  # otherwise emit nothing so callers can detect "no release yet".
-  # grep exits 1 when no match; use `|| true` to avoid triggering pipefail
+  # Resolve the latest release tag from the distribution repo. Two strategies,
+  # either of which suffices; the first non-empty result wins:
+  #
+  # 1. REST API: GET /releases/latest returns JSON with a "tag_name" field.
+  #    Robust against proxies/mirrors that rewrite or strip redirect headers.
+  # 2. Redirect header: GitHub redirects /releases/latest to
+  #    /releases/tag/<tag> when a release exists; with no releases it
+  #    redirects to /releases (no "tag/" segment), which we treat as empty.
+  #
+  # grep exits 1 when no match; use `|| true` to avoid triggering pipefail.
+  local owner_repo tag
+  owner_repo="${REPO_WEB_URL#https://github.com/}"
+  owner_repo="${owner_repo%/}"
+  owner_repo="${owner_repo%.git}"
+
+  # Strategy 1: REST API (preferred — doesn't depend on redirect headers).
+  tag=$(curl -fsSL "https://api.github.com/repos/${owner_repo}/releases/latest" 2>/dev/null |
+    grep -o '"tag_name"[[:space:]]*:[[:space:]]*"[^"]*"' |
+    head -n1 |
+    sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"//; s/"$//' |
+    tr -d '\r\n' || true)
+  if [ -n "$tag" ]; then
+    printf '%s' "$tag"
+    return
+  fi
+
+  # Strategy 2: redirect Location header.
   curl -sI "$REPO_WEB_URL/releases/latest" 2>/dev/null |
     grep -i '^location:' |
     grep -i '/tag/' |
